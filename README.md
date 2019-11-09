@@ -80,6 +80,3 @@ var verify_rsa = new RSA.RSAKey();
 
 签名起不到加密作用，但可以确定是谁发出的信息
 使用公钥加密算法，可以对明文进行加密，但不能确定是谁发出该消息
-
-
-欢迎留言交流指正 谢谢！：）http://blog.csdn.NET/ufo00001/article/details/72822907
