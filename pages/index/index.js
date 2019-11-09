@@ -1,120 +1,144 @@
-/**
- * 注：区分RSA私钥的类型，有pkcs1和pkcs8。pkcs8格式的私钥主要用于Java中
- 
- pkcs1格式：
------BEGIN RSA PRIVATE KEY-----
------END RSA PRIVATE KEY------
-
- pkcs8格式：
------BEGIN PRIVATE KEY-----
------END PRIVATE KEY-----
-
- */
-var RSA = require('../../utils/wx_rsa.js')
-//获取应用实例
-var app = getApp()
-var Sig = ""
-var encStr =""
-
+//index.js
+const app = getApp();
+var QQMapWX = require('../../libs/qqmap-wx-jssdk.js');
 Page({
   data: {
-    output: '上方输入框输入数据后点击下方对应按钮转换',
-    input:''
-
+    nowcity:'',
+    weatherdata:'',
+    showdaydata:'',
+    update_time:'',
+    inputvalue:'',
+    index:0,
+    StatusBar: app.globalData.StatusBar,
   },
-  input_rsa:function(e){
+  tapday:function(e){
     this.setData({
-      input:e.detail.value
+      showdaydata: this.data.weatherdata.data[e.currentTarget.dataset.item],
+      update_time: this.data.weatherdata.update_time,
+      index: e.currentTarget.dataset.item
     })
-    let v = e.detail.value
-    console.log(v)
-  },
-
-  // 加签
-  jiaqian: function () {
-    console.log('加签RSA1:')
-    var sign_rsa = new RSA.RSAKey();
-    sign_rsa = RSA.KEYUTIL.getKey(privateKey);
-    console.log('加签RSA:')
-    console.log(sign_rsa)
-    var hashAlg = 'sha1';
-    Sig = sign_rsa.signString("signData", hashAlg);
-    Sig = RSA.hex2b64(Sig); // hex 转 b64
-    console.log("加签结果：" + Sig)
-    this.setData({
-      output: Sig
-    })
-  },
-
-   // 验签
-  yanqian: function () {
-    var verify_rsa = new RSA.RSAKey();
-    verify_rsa = RSA.KEYUTIL.getKey(publicKey);
-    console.log('验签RSA:')
-    console.log(verify_rsa)
-    if (Sig == ""){
-      wx.showToast({
-        title: '请先验签',
-        icon: 'loading',
-        duration: 1000
+    if (wx.pageScrollTo) {
+      wx.pageScrollTo({
+        scrollTop: 0
       })
-    }else{
-      Sig = RSA.b64tohex(Sig)
-      var ver = verify_rsa.verifyString("signData", Sig)
-      console.log('验签结果：' + ver)
-      this.setData({
-        output: ver
+    } else {
+      wx.showModal({
+        title: '提示',
+        content: '当前微信版本过低，无法使用该功能，请升级到最新微信版本后重试。'
       })
     }
-  
-  },
-
-  //加密
-  jiami: function () {
-    var input_rsa = this.data.input;
-    var encrypt_rsa = new RSA.RSAKey();
-    encrypt_rsa = RSA.KEYUTIL.getKey(publicKey);
-    console.log('加密RSA:')
-    console.log(encrypt_rsa)
-    encStr = encrypt_rsa.encrypt(input_rsa)
-    encStr = RSA.hex2b64(encStr);
-    console.log("加密结果：" + encStr)
-
+  }, 
+  getsearch:function(e){
+    wx.showLoading({
+      title: '正在加载',
+    })
+    this.getnowweather(e.detail.value)
+    this.getweather(e.detail.value)
     this.setData({
-      output: encStr
+      inputvalue:''
+    })
+  } ,
+  getweather:function(e){
+    var that=this
+    wx.request({
+      url: 'https://www.tianqiapi.com/api',
+      data: {
+        "version": 'v1',
+        "city":e
+      },
+      method: 'GET',
+      header: {
+        'content-type': 'application/json'
+      },
+      success: function (e) {
+        wx.hideLoading()
+        console.log(e.data)
+        for (var i in e.data.data){
+          e.data.data[i].tem = e.data.data[i].tem.substr(0, e.data.data[i].tem.length-1)
+          e.data.data[i].tem1 = e.data.data[i].tem1.substr(0, e.data.data[i].tem1.length - 1)
+          e.data.data[i].tem2 = e.data.data[i].tem2.substr(0, e.data.data[i].tem2.length - 1)
+        }
+        that.setData({ weatherdata: e.data, nowcity:e.data.city})
+      },
+      fail: function () {
+        wx.showToast({
+          title: '失败',
+          icon: 'none'
+        })
+      }
     })
   },
-
-  //解密
-  jiemi: function () {
-    var decrypt_rsa = new RSA.RSAKey();
-    decrypt_rsa = RSA.KEYUTIL.getKey(privateKey);
-    console.log('解密RSA:')
-    console.log(decrypt_rsa)
-    console.log(encStr+"00--00")
-    if (encStr.length <=0){
-      wx.showToast({
-        title: '请先加密',
-        icon: 'loading',
-        duration: 1000
-      })
-    }else{
-      
-      encStr = RSA.b64tohex(encStr);
-      console.log(encStr + "001--100")
-      var decStr = decrypt_rsa.decrypt(encStr)
-      console.log("解密结果：" + decStr)
-      this.setData({
-        output: decStr
-      })
-    }
-   
+  getnowweather: function (e) {
+    var that = this
+    wx.request({
+      url: 'https://www.tianqiapi.com/api',
+      data: {
+        "version": 'v6',
+        "city": e
+      },
+      method: 'GET',
+      header: {
+        'content-type': 'application/json'
+      },
+      success: function (e) {
+        console.log(e.data)
+        var somedata = [{ "title": "当前温度", "data": e.data.tem }, { "title": "空气质量", "data": e.data.air },
+          { "title": "PM2.5", "data": e.data.air_pm25 },
+          { "title": "空气等级", "data": e.data.air_level },
+          { "title": "湿度", "data": e.data.humidity },
+          { "title": "能见度", "data": e.data.visibility },
+          { "title": "气压hPa", "data": e.data.pressure },
+          { "title": "风向", "data": e.data.win },
+          { "title": "风速等级", "data": e.data.win_speed },
+          { "title": "当前温度", "data": e.data.tem },
+          { "title": "风速", "data": e.data.win_meter }]
+        that.setData({
+          update_time: e.data.update_time, showdaydata: e.data,
+          somedata: somedata })
+      },
+      fail: function () {
+        wx.showToast({
+          title: '失败',
+          icon: 'none'
+        })
+      }
+    })
   },
-
   onLoad: function () {
-    console.log('onLoad')
-   
-  }
+    wx.showLoading({
+      title: '正在加载',
+    })
+    var that = this
+    var qqmapsdk = new QQMapWX({
+      key: 'XVIBZ-RKPKV-SVQP3-UPHIV-COTQV-AXBTK' // 必填
+    });
+    wx.getLocation({
+      success: function (res) {
+        qqmapsdk.reverseGeocoder({
+          location: {
+            latitude: res.latitude,
+            longitude: res.longitude
+          },
+          success: function (r) {
+            var location = r.result.address_component.district
+            location = location.substr(0, location.length - 1)
+            console.log(r)
+            that.setData({
+              location:location
+            })
+            that.getweather(location)
+            that.getnowweather(location)
+          }
+        })
+      },
+    })
+  },
+  onPullDownRefresh: function () {
+    this.getweather(this.data.location)
+    this.getnowweather(this.data.location)
+    this.setData({
+      index:0
+    })
+    wx.stopPullDownRefresh();
+  },
 })
-var privateKey = '-----BEGIN RSA PRIVATE KEY-----MIICXgIBAAKBgQCoChRDJ6e7BTE5yYBIS + NGYBpDs7ftEematqhvMmOFcJng7qjJk + yJ1j7DCqbCD2f / BI6gTfGXASiYuO6kklZu8Pkw4HAUkaaGyhaC8Z + TMg79PPRz5hziEdFXPTdXvXudiXbI2Wi6D90ZaSwN6ZHs7Mtc5VgGK3jxS35iLm+ oAQIDAQABAoGBAI + nHi9SxUdSZwS5yBsGFSNioNFj4Eag243RvShicUXwPvxVyqGY / cvQBhODFZAsz4Dpimxsda3b5bK51fmGyK / nXraHRunWcG7cDDB0EnRpGh4LvMI5Tny + kV0v07N0kkYF+ Lig88IjyBXMAY8m97QK / Huf6MsDFo7B6maSvlmBAkEA35GXk6achryGAoUyyLSro7bI9A9 + wXWFdXoqu1 / X1sZ8taGy7saB + XEA6EQ + XHRp7rZkQ5StoBL +reDGvLJLWQJBAMBqW / F + qg1VpmV / EfYTSS0 + jliw / Ik4kKHLuD / bYK61FG80JIoxLbelB / 1ZVZ8WR0cUKgrmoo8HOggjocNTNOkCQQCYibK86CHGAF0C3TSgIj01r2H+u4 / FmVScqeT8AVG31aeDGbeHGOPXeJWg4 + cUl80rNUDFp2yrWipwInwWhSPJAkAf+ 02u9Ru0vbC7nARTP19hWs10Jm7DLBi2G9NTIdaPE2ADH8qXAZeUt6R9UrTtjVlpkgtu5mjMlynpImsHuTPJAkEAoU10QspqfxL4F44KdHjHY1btc8wb4soaLy / eAY8PLE + jpNh8jsqA8v1EqLQbYz50D / BpkJsT5W + wydTvtEE3sA ==-----END RSA PRIVATE KEY-----'
-var publicKey = '-----BEGIN PUBLIC KEY-----MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCoChRDJ6e7BTE5yYBIS + NGYBpDs7ftEematqhvMmOFcJng7qjJk + yJ1j7DCqbCD2f / BI6gTfGXASiYuO6kklZu8Pkw4HAUkaaGyhaC8Z+ TMg79PPRz5hziEdFXPTdXvXudiXbI2Wi6D90ZaSwN6ZHs7Mtc5VgGK3jxS35iLm+ oAQIDAQAB-----END PUBLIC KEY-----'

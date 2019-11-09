@@ -1,14 +1,19 @@
 {
-  "pages":[
+  "pages": [
     "pages/index/index"
-  
   ],
   "window": {
-    "navigationBarBackgroundColor": "#F00",
-    "navigationBarTitleText": "RSA",
-    "navigationBarTextStyle": "white",
-    "enablePullDownRefresh": true,
-    "backgroundColor": "#ff0000",
-    "backgroundTextStyle": "light"
-  }
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "WeChat",
+    "navigationBarTextStyle": "black",
+    "navigationStyle":"custom",
+    "enablePullDownRefresh": true
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "你的位置信息将用于小程序位置接口的效果展示"
+    }
+  },
+  "sitemapLocation": "sitemap.json"
 }

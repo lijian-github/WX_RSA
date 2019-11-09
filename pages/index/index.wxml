@@ -1,12 +1,87 @@
 <!--index.wxml-->
-<view class="container">
-  <input class="input"  placeholder="请输入" bindinput="input_rsa"/>
-  <view class="output" >
-      <view class="output01">输出结果：</view>
-     <view class="output02">{{output}}</view>
+
+<view class="wcontainer">
+</view>
+<view style='width:100%;height:{{StatusBar+46}}px;padding-top:{{StatusBar}}px;box-sizing: border-box ' class='bar' >
+<view class='user'>
+  <view class='userAvatar'>
+    <open-data type="userAvatarUrl"></open-data>
   </view>
-  <view class="jiaqian" bindtap="jiaqian">加签</view>
-  <view class="yanqian" bindtap="yanqian">验签</view>
-  <view class="jiami" bindtap="jiami">加密</view>
-  <view class="jiemi" bindtap="jiemi">解密</view>
+  <open-data class="userNick" type="userNickName"></open-data>
+</view>
+
+  <image src='../../image/location.png' class='locationimg'></image>
+  <text style='color:#777'>{{nowcity}}</text>
+  <text > · 天气</text>
+</view>
+<view wx:if="{{weatherdata.data}}" class='content'>
+<view class='searchbar'>
+    <image src='../../image/search.png' class='searchimg'></image>
+    <input placeholder='请输入城市名，快速查询天气信息' bindconfirm="getsearch" placeholder-class='inputph' class='searchinput' value='{{inputvalue}}'></input>
+</view>
+  <view class='nowcontent'>
+  <text  style='font-size: 30rpx;margin-top: 20rpx;'>{{weatherdata.data[index].day}}</text>
+    <view class='tem'>
+      <text style='font-size: 150rpx;margin: 5px;'>{{showdaydata.tem}}</text>
+    <text style='font-size: 50rpx;margin: 10px 0px;'>℃</text>
+    </view>
+    <view class='nowtq'>
+      <image src="../../image/{{showdaydata.wea_img?showdaydata.wea_img:'qing'}}.png" class='nowqkimg'></image>
+      <text style='font-size: 35rpx;'>{{showdaydata.wea}}</text>
+    </view>
+    <view class='nowqk'>
+    <text class='nowcontenttext'>{{showdaydata.tem1}}/{{showdaydata.tem2}}℃</text>
+    <text class='nowcontenttext' wx:if="{{showdaydata.air_level}}">空气：{{showdaydata.air_level}}</text>
+    <text wx:if="{{showdaydata.air_tips}}" class='nowcontenttext' style='color:rgb(80,80,80); width:70%;margin: 10px;'>tips:{{showdaydata.air_tips}}</text>
+    </view>
+    <text class='nowbottomtext'>更新时间：{{update_time}}</text>
+  </view>
+
+  <scroll-view class='timecontent' scroll-x="true">
+      <block wx:for='{{weatherdata.data[index].hours}}' wx:key='index' >
+    <view class='timedataitem' >
+      <view class='item'>
+        <text style='font-size: 20rpx;'>{{item.day}}</text>
+        <text style='font-size: 30rpx;'>{{item.wea}}</text>
+        <text style='font-size: 20rpx;'>{{item.win}}</text>
+        <text style='font-size: 20rpx;'>{{item.win_speed}}</text>
+        <text >{{item.tem}}</text>
+      </view>
+    </view>
+  </block>
+  </scroll-view>
+
+  <view wx:if="{{index==0}}" class='somecontent'>
+       <block wx:for='{{somedata}}' wx:key='index' >
+    <view wx:if="{{item.data}}" class='someitemcontent' >
+    <view class='someitem' >
+        <text style='font-size: 25rpx;'>{{item.title}}</text>
+        <text style='font-size: 20rpx;margin-top: 10rpx;'>{{item.data}}</text>
+    </view>
+    </view>
+  </block>
+  </view>
+
+  <view class='daycontent'>
+  <text class='daytitle'>七日天气(点击查看)</text>
+  <block wx:for='{{weatherdata.data}}' wx:key='item.day' >
+    <view class='daydataitem' data-item='{{index}}' bindtap='tapday'>
+        <text style='font-size: 30rpx; width:30%;'>{{item.day}}</text>
+        <text style='font-size: 20rpx; width:20%;'>{{item.wea}}</text>
+        <image src="../../image/{{item.wea_img?item.wea_img:'qing'}}.png" class='nowqkimg' ></image>
+        <text style='font-size: 30rpx;'>{{item.tem1}}/{{item.tem2}}℃</text>
+    </view>
+  </block>
+  </view> 
+
+  <view class='nowzscontent'>
+  <view class='zstitle'>生活指数</view>
+  <block wx:for='{{weatherdata.data[index].index}}' wx:key='item.title' >
+    <view class='zsdataitem' wx:if="{{item.level}}">
+        <text style='font-size: 25rpx;'>{{item.title}}</text>
+        <text style='font-size: 40rpx; align-self: center;'>{{item.level}}</text>
+        <text style='font-size: 30rpx;align-self: flex-end;'>{{item.desc}}</text>
+    </view>
+  </block>
+  </view> 
 </view>
